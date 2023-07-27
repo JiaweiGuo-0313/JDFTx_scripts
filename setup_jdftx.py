@@ -64,31 +64,6 @@ def check_convergence(job_name, maxIter):
             f.write(dedent(f"initial-state {job_name}.$VAR\n"))
         # only write initial-state one time for all reruns
 
-"""
-def check_convergence(job_name, maxIter):
-    nIter = 0
-    lines = open(f"{job_name}.out", 'r').readlines()
-    lines = reversed(lines)
-    for line in lines:
-        if 'IonicMinimize: Iter:' in line:
-            nIter += 1
-            print(line.split())
-
-    if nIter <= maxIter:
-        print("converged")
-    else:
-        print("not converged")
-        in_lines = open(f"{job_name}.in", 'r').readlines()
-        write_line = True
-        for line in in_lines:
-            if 'initial-state' in line:
-                write_line = False
-                break
-        if write_line is True:
-            with open(f"{job_name}.in", 'a') as f:
-                f.write(dedent(f"initial-state {job_name}.$VAR\n"))
-        # only write initial-state one time for all reruns
-"""
 
 ###################################################################################################
 ###################################################################################################
