@@ -7,8 +7,9 @@ os.system('module load jdftx/1.7.0')
 
 def setup_geometry(atoms, pad, **kwargs):
     # generate geometry inputs from existing .xyz
-    atoms.write('start.xyz', format='xyz')
-    os.system(f"/home/gjw123/programs/jdftx/jdftx-git/jdftx/scripts/xyzToIonposOpt start.xyz {pad}")  # in bohr
+    if atoms is not None:
+        atoms.write('start.xyz', format='xyz')
+        os.system(f"/home/gjw123/programs/jdftx/jdftx-git/jdftx/scripts/xyzToIonposOpt start.xyz {pad}")  # in bohr
 
 
 def check_convergence(job_name, maxIter):
@@ -20,12 +21,12 @@ def check_convergence(job_name, maxIter):
     return False
     
 
-def write_inputs(atoms, status, job_name, pad=15, coords_type="cartesian", functional="PBE",
-        vdw='D3', maxIter=0, elec_ex_corr=None, **kwargs):
+def write_inputs(atoms, status, job_name, start_name, pad=15, coords_type="cartesian", functional="PBE",
+        vdw='D3', maxIter=0, elec_ex_corr=None, more_outputs='', charge=0, solvent='', *kwargs):
     # geometry & unit cell setup
     if status == 'NEW':
         setup_geometry(atoms, pad)
-        jdftx_in = dedent(f"include start.lattice\ninclude start.ionpos\n")
+        jdftx_in = dedent(f"include {start_name}.lattice\ninclude {start_name}.ionpos\n")
     elif status == 'RERUN':
         if check_convergence(job_name, maxIter):
             print("converged")
@@ -37,7 +38,7 @@ def write_inputs(atoms, status, job_name, pad=15, coords_type="cartesian", funct
     else:
         return
     jdftx_in += dedent(f"coords-type {coords_type}\ncoulomb-interaction Isolated\ncoulomb-truncation-embed 0 0 0\n")
-    
+ 
     # dispersion & functional setup
     functional_mapper = {'PBE': 'gga-PBE', 'PW': 'gga-PW91', 'B3LYP': 'hyb-gga-b3lyp', 'PBE0': 'hyb-PBE0',
             'HSE06': 'hyb-HSE06', 'TPSS': 'mgga-TPSS', 'rTPSS': 'mgga-revTPSS', 'HF': 'Hartree-Fock'}
@@ -54,22 +55,34 @@ def write_inputs(atoms, status, job_name, pad=15, coords_type="cartesian", funct
         jdftx_in += dedent(f"ion-species GBRV/$ID_pbe.uspp\nelec-cutoff 20 100\n") # ultrasoft pseudopotentials
 
     # output setup
-    jdftx_in += dedent(f"dump-name {job_name}.$VAR\ndump End State Lattice\n") # OUTPUT
+    jdftx_in += dedent(f"dump-name {job_name}.$VAR\ndump End State Lattice {more_outputs}\n") # outputs
 
-    # calculation setup
+    # geometry optimization calc. setup
     jdftx_in += dedent(f"ionic-minimize nIterations {maxIter}\n") # maxIter=0: single point; >0: geometry opt
+
+    # solvation params setup: stick to LinearPCM methods for now
+    if solvent != '':
+        jdftx_in += dedent(f"elec-initial-charge {charge}\n")
+        jdftx_in += dedent(f"fluid LinearPCM\npcm-variant {job_name}\nfluid-solvent {solvent}\n")
 
     with open(f"{job_name}.in", 'w') as f:
         f.write(jdftx_in)
-    # TODO: INCLUDE SOL, VIB
+
+    # TODO: INCLUDE VIB
 
 
 ###############################################################################################################
 ###############################################################################################################
 
-status, job_name, maxIter = sys.argv[1:]
-atoms = read('start.xyz', '0')
-write_inputs(atoms, status=status, job_name=job_name, maxIter=int(maxIter))
+# TODO: hardcoded inputs, fix
+status, job_name, start_name, maxIter, charge = sys.argv[1:6]
+atoms = None
+try:
+    solvent = sys.argv[6]
+except:
+    solvent = ''
+    atoms = read('start.xyz', '0')
+write_inputs(atoms, status, job_name, start_name, maxIter=int(maxIter), charge=int(charge), solvent=solvent)
 
 
 
