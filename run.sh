@@ -14,24 +14,32 @@ module load jdftx/1.7.0
 export SLURM_CPU_BIND="cores"
 export JDFTX_MEMPOOL_SIZE=8192
 
-job_name='Vacuum'
-nIter='3'
+nIter='10'
+charge='0'  # measured in electrons. eg. OH- will have charge +1,  H3O+ will have charge -1
 
-python setup_jdftx.py NEW $job_name $nIter
-srun -n 1 -c 4 jdftx -i $job_name.in -o $job_name.out -d # overwrite
+# starting from existing .xyz, geometry optimization without solvation (in vacuum)
+start_name='start'
+job_name='Vacuum'
+solvent=''
+
+# setups geometry optimization now including solvation
+# start_name='Vacuum'
+# job_name='CANDLE'
+# solvent='CH3CN'
+
+# run geometry optimization until convergence is reached
+python setup_jdftx.py NEW $job_name $start_name $nIter $charge $solvent
+srun -n 1 -c 16 jdftx -i $job_name.in -o $job_name.out -d  # overwrite
 
 for i in {1..20}
 do
-job_status=$(python setup_jdftx.py RERUN $job_name $nIter)
+job_status=$(python setup_jdftx.py RERUN $job_name $start_name $nIter $charge $solvent)
 
 if [ "$job_status" != "converged" ];
 then
 echo $i
-srun -n 1 -c 4 jdftx -i $job_name.in -o $job_name.out;  # append mode
+srun -n 1 -c 16 jdftx -i $job_name.in -o $job_name.out;  # append mode
 fi;
 
 done
-
-
-
 
