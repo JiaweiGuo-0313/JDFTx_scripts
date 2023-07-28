@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env python
 import os, sys, time, glob, shutil, subprocess, copy
 from ase.io import read
 from textwrap import dedent
