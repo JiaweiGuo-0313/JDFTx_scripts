@@ -29,7 +29,7 @@ solvent=''
 
 # run geometry optimization until convergence is reached
 python setup_jdftx.py NEW $job_name $start_name $nIter $charge $solvent
-srun -n 1 -c 16 jdftx -i $job_name.in -o $job_name.out -d  # overwrite
+mpirun -n 1 -c 16 jdftx -i $job_name.in -o $job_name.out -d  # overwrite
 
 for i in {1..20}
 do
@@ -38,7 +38,7 @@ job_status=$(python setup_jdftx.py RERUN $job_name $start_name $nIter $charge $s
 if [ "$job_status" != "converged" ];
 then
 echo $i
-srun -n 1 -c 16 jdftx -i $job_name.in -o $job_name.out;  # append mode
+mpirun -n 1 -c 16 jdftx -i $job_name.in -o $job_name.out;  # append mode
 fi;
 
 done
