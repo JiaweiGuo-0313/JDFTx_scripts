@@ -5,7 +5,7 @@
 #SBATCH --exclude=agate-0,agate-1,agate-10,agate-16,agate-19,agate-26,agate-28,agate-29,agate-40,agate-43
 #SBATCH --nodes=1 --partition=high
 #SBATCH --mem-per-cpu=12000
-#SBATCH --nodelist=agate-5
+#SBATCH --nodelist=agate-15
 #SBATCH --ntasks-per-node=16
 #SBATCH --ntasks-per-core=4
 #SBATCH --threads-per-core=1
@@ -48,7 +48,7 @@ python setup_jdftx.py NEW $1 $2 $3 $4 $5
 
 for iMu in {-10..10}
 do
-export mu="$(echo $iMu | awk '{printf("%.4f", PZC+0.1*$1/27.2114)}')"
+export mu="$(echo $iMu | awk '{printf("%.4f", PZC+0.5*$1/27.2114)}')"
 mpirun -n 1 -c 16 jdftx -i $1.in -o $1$mu.out
 # mv $1.nbound $1$mu.nbound
 done
@@ -59,19 +59,16 @@ done
 ###############################################################################################################
 ###############################################################################################################
 
-# inputs (ordering matters): end_name start_name nIter charge solvent
+# inputs (ordering matters): end_name start_name maxIter charge solvent
 
-# starting from existing .xyz, geometry optimization without solvation (in vacuum)
-# run 'Vacuum' 'start' '10' '0' '' 
+# python setup_jdftx.py from_xyz 	   # generate input files from .xyz 
+# run 'Vacuum' 'start' '3' '0' '' 	   # run geometry opt in vacuum
+# run 'CANDLE' 'Vacuum' '10' '0' 'CH3CN'   # now including solvation
+# run 'CANDLE' 'start' '10' '0' 'CH3CN'	   # OR: directly run geometry opt including solvation (comment out the previous two lines)
 
-# setups geometry optimization now including solvation
-# run 'CANDLE' 'Vacuum' '10' '0' 'CH3CN'
-
-# Neutral (ref) for GC-DFT after geometry optimization including solvation
-run 'Neutral' 'CANDLE' '20' 'GC-Neutral' 'CH3CN' # no more geometry optimization, so nIter=0
-
-# Charged (fixed-potential) calculations
-# run_GC 'Charged' 'CANDLE' '20' 'GC-Charged' 'CH3CN' 'Neutral'
+# fixed-potential calculations (GC-DFT)
+run 'Neutral' 'CANDLE' '20' 'GC-Neutral' 'CH3CN' 		   # run Neutral to get Potential of Zero Charge (PZC) 
+# run_GC 'Charged' 'CANDLE' '20' 'GC-Charged' 'CH3CN' 'Neutral'    # run potential scan w.r.t PZC
 
 
 
