@@ -63,7 +63,7 @@ def write_inputs(atoms, status, job_name, start_name, pad=15, coords_type="carte
     if solvent != '':
         jdftx_in += dedent(f"elec-initial-charge {charge}\n")
         jdftx_in += dedent(f"fluid LinearPCM\npcm-variant {job_name}\nfluid-solvent {solvent}\n")
-        jdftx_in += dedent(f"fluid-cation Na+ {electrolyte_conc}, fluid-anion F- {electrolyte_conc}\n")
+        jdftx_in += dedent(f"fluid-cation Na+ {electrolyte_conc}\nfluid-anion F- {electrolyte_conc}\n")
         # different ion choices behave differently only for ClassicalDFT (explicit solvation)
         # stick to Na+ and F- in the continuum electrolyte (NaF is a well-known non-adsorbing electrolyte)
 
