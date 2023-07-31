@@ -87,7 +87,7 @@ def write_inputs(atoms, status, job_name, start_name, pad=15, coords_type="carte
         if 'GC' in charge: 
             jdftx_in += dedent(f"elec-smearing Fermi 0.01\n")
             if 'Charged' in charge:
-                jdftx_in += dedent(f"electronic-minimize nIterations 200\ntarget-mu ${{mu}}\n")
+                jdftx_in += dedent(f"initial-state {job_name}.$VAR\nelectronic-minimize nIterations 200\ntarget-mu ${{mu}}\n")
 
 
     with open(f"{job_name}.in", 'w') as f:
