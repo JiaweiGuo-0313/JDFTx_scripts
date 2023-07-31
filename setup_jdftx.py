@@ -71,8 +71,7 @@ def write_inputs(atoms, status, job_name, start_name, pad=15, coords_type="carte
     jdftx_in += dedent(f"dump-name {job_name}.$VAR\ndump End State Lattice {more_outputs}\n") # outputs
     
     # geometry optimization calc. setup
-    if 'GC' not in charge: # run GC only after geometry opt has been done
-        jdftx_in += dedent(f"ionic-minimize nIterations {maxIter}\n") # maxIter=0: single point; >0: geometry opt
+    jdftx_in += dedent(f"ionic-minimize nIterations {maxIter}\n") # maxIter=0: single point; >0: geometry opt
     
     # solvation params setup: stick to LinearPCM methods for now
     if solvent != '':  ### add other models 
