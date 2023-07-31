@@ -68,10 +68,10 @@ done
 # run 'CANDLE' 'Vacuum' '10' '0' 'CH3CN'
 
 # Neutral (ref) for GC-DFT after geometry optimization including solvation
-run 'Neutral' 'CANDLE' 'None' 'GC-Neutral' 'CH3CN' # no more geometry optimization, so nIter=0
+run 'Neutral' 'CANDLE' '20' 'GC-Neutral' 'CH3CN' # no more geometry optimization, so nIter=0
 
 # Charged (fixed-potential) calculations
-# run_GC 'Charged' 'CANDLE' 'None' 'GC-Charged' 'CH3CN' 'Neutral'
+# run_GC 'Charged' 'CANDLE' '20' 'GC-Charged' 'CH3CN' 'Neutral'
 
 
 
