@@ -40,17 +40,19 @@ class JDFTx_helper(object):
         return False
 
 
-    def get_final_mu(self):
-        # get PZC (potential of zero charge)
+    def get_final_properties(self):
         p = re.compile('[+-]?\d+.\d+')
         lines = open(f"{self.job_name}.out", 'r').readlines()
-        lines = reversed(lines)
-        for line in lines:
-            if "FillingsUpdate:  mu:" in line:
+        lines = list(reversed(lines))
+        for i, line in enumerate(lines):
+            if self.status == 'GC-mu' and "FillingsUpdate:  mu:" in line:
+                print(float(p.findall(line)[0]))
+                return
+            if self.status == 'GC-E' and "IonicMinimize: Iter" in line and "IonicMinimize: Converged" in lines[i-1]:
                 print(float(p.findall(line)[0]))
                 return
 
-
+    
     def setup_UC_and_geometries(self, coords_type):
         
         if self.status == 'NEW':
@@ -131,8 +133,8 @@ helper_class = JDFTx_helper(status, job_name, start_name, maxIter, charge, solve
 if status == 'from_xyz':
     atoms = read('start.xyz', '0') # edit this line with appropriate names
     helper_class.setup_geometry(atoms)
-elif status == 'GC': 
-    helper_class.get_final_mu(job_name)
+elif 'GC' in status: 
+    helper_class.get_final_properties()
 else:
     helper_class.write_inputs()
 

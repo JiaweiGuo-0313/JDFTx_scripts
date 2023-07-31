@@ -43,7 +43,7 @@ done
 
 run_GC () {
 
-PZC=$(python setup_jdftx.py GC $6)
+PZC=$(python setup_jdftx.py GC-mu $6)
 python setup_jdftx.py NEW $1 $2 $3 $4 $5
 
 for iMu in {-10..10}
@@ -56,20 +56,32 @@ done
 }
 
 
+collect () {
+
+for file in $1*.out
+do
+mu=$(python setup_jdftx.py GC-mu ${file::-4})
+G=$(python setup_jdftx.py GC-E ${file::-4})
+echo $mu $G
+# awk '/FillingsUpdate/ {mu=$3; N=$5} END {print mu, N}' "$file"
+done
+
+}
+
 ###############################################################################################################
 ###############################################################################################################
 
 # inputs (ordering matters): end_name start_name maxIter charge solvent
 
-# python setup_jdftx.py from_xyz 	   # generate input files from .xyz 
-# run 'Vacuum' 'start' '3' '0' '' 	   # run geometry opt in vacuum
-# run 'CANDLE' 'Vacuum' '10' '0' 'CH3CN'   # now including solvation
-# run 'CANDLE' 'start' '10' '0' 'CH3CN'	   # OR: directly run geometry opt including solvation (comment out the previous two lines)
+# python setup_jdftx.py from_xyz 	# generate input files from .xyz 
+# run Vacuum start 3 0 	                # run geometry opt in vacuum
+# run CANDLE Vacuum 10 0 CH3CN          # now including solvation
+# run CANDLE start 10 0 CH3CN	        # OR: directly run geometry opt including solvation (comment out the previous two lines)
 
 # fixed-potential calculations (GC-DFT)
-run 'Neutral' 'CANDLE' '20' 'GC-Neutral' 'CH3CN' 		   # run Neutral to get Potential of Zero Charge (PZC) 
-# run_GC 'Charged' 'CANDLE' '20' 'GC-Charged' 'CH3CN' 'Neutral'    # run potential scan w.r.t PZC
-
+# run Neutral CANDLE 20 GC-Neutral CH3CN 	      # run Neutral to get Potential of Zero Charge (PZC) 
+# run_GC Charged CANDLE 20 GC-Charged CH3CN Neutral   # run potential scan w.r.t PZC
+# collect Charged 
 
 
 
