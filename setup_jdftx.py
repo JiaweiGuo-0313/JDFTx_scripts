@@ -1,7 +1,12 @@
 #!/usr/bin/env python
+"""
+Created on Wed Jul 26 2023
+@author: Jiawei Guo
+"""
 import os, sys, time, glob, shutil, subprocess, copy
 from ase.io import read
 from textwrap import dedent
+import re
 
 
 def setup_geometry(atoms, pad, **kwargs):
@@ -18,6 +23,15 @@ def check_convergence(job_name, maxIter):
         if "IonicMinimize: Converged" in line:
             return True
     return False
+
+
+def get_final_mu(job_name):
+    p = re.compile('[+-]?\d+.\d+')
+    lines = open(f"{job_name}.out", 'r').readlines()
+    lines = reversed(lines)
+    for line in lines:
+        if "FillingsUpdate:  mu:" in line:
+            return float(p.findall(line)[0])
 
 
 def write_inputs(atoms, status, job_name, start_name, pad=15, coords_type="cartesian", functional="PBE", 
@@ -57,15 +71,24 @@ def write_inputs(atoms, status, job_name, start_name, pad=15, coords_type="carte
     jdftx_in += dedent(f"dump-name {job_name}.$VAR\ndump End State Lattice {more_outputs}\n") # outputs
     
     # geometry optimization calc. setup
-    jdftx_in += dedent(f"ionic-minimize nIterations {maxIter}\n") # maxIter=0: single point; >0: geometry opt
+    if 'GC' not in charge: # run GC only after geometry opt has been done
+        jdftx_in += dedent(f"ionic-minimize nIterations {maxIter}\n") # maxIter=0: single point; >0: geometry opt
     
     # solvation params setup: stick to LinearPCM methods for now
-    if solvent != '':
-        jdftx_in += dedent(f"elec-initial-charge {charge}\n")
-        jdftx_in += dedent(f"fluid LinearPCM\npcm-variant {job_name}\nfluid-solvent {solvent}\n")
+    if solvent != '':  ### add other models 
+        jdftx_in += dedent(f"fluid LinearPCM\npcm-variant CANDLE\nfluid-solvent {solvent}\n")
         jdftx_in += dedent(f"fluid-cation Na+ {electrolyte_conc}\nfluid-anion F- {electrolyte_conc}\n")
         # different ion choices behave differently only for ClassicalDFT (explicit solvation)
         # stick to Na+ and F- in the continuum electrolyte (NaF is a well-known non-adsorbing electrolyte)
+        
+        # CHE model vs. GC-DFT
+        if type(charge) in [int, float] or charge.strip('-').isnumeric(): # explicitly define charge
+            jdftx_in += dedent(f"elec-initial-charge {charge}\n")
+        if 'GC' in charge: 
+            jdftx_in += dedent(f"elec-smearing Fermi 0.01\n")
+            if 'Charged' in charge:
+                jdftx_in += dedent(f"electronic-minimize nIterations 200\ntarget-mu ${{mu}}\n")
+
 
     with open(f"{job_name}.in", 'w') as f:
         f.write(jdftx_in)
@@ -76,17 +99,17 @@ def write_inputs(atoms, status, job_name, start_name, pad=15, coords_type="carte
 ###############################################################################################################
 ###############################################################################################################
 
-# TODO: hardcoded inputs, fix, include electrolyte_conc
-status, job_name, start_name, maxIter, charge = sys.argv[1:6]
-atoms = None
-try:
-    solvent = sys.argv[6]
-except:
-    solvent = ''
+status, job_name, start_name, maxIter, charge, solvent = sys.argv[1:] + ['' for i in range(7-len(sys.argv))]
+
+if solvent == '':
     atoms = read('start.xyz', '0') 
+else:
+    atoms = None
 
-write_inputs(atoms, status, job_name, start_name, maxIter=int(maxIter), charge=int(charge), solvent=solvent)
-
+if status == 'GC':
+    print(get_final_mu(job_name))
+else:
+    write_inputs(atoms, status, job_name, start_name, maxIter=maxIter, charge=charge, solvent=solvent)
 
 
 
