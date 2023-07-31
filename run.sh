@@ -1,6 +1,6 @@
 #!/bin/bash
 # Created on Wed Jul 26 2023
-# author: Jiawei Guoi
+# author: Jiawei Guo
 
 #SBATCH --exclude=agate-0,agate-1,agate-10,agate-16,agate-19,agate-26,agate-28,agate-29,agate-40,agate-43
 #SBATCH --nodes=1 --partition=high
