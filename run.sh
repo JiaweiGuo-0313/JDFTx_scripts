@@ -48,7 +48,7 @@ python setup_jdftx.py NEW $1 $2 $3 $4 $5
 
 for iMu in {-10..10}
 do
-export mu="$(echo $iMu | awk '{printf("%.4f", PZC+0.5*$1/27.2114)}')"
+export mu="$(echo $PZC $iMu | awk '{printf("%.4f", $1+0.1*$2/27.2114)}')"
 mpirun -n 1 -c 16 jdftx -i $1.in -o $1$mu.out
 # mv $1.nbound $1$mu.nbound
 done
